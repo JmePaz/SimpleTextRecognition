@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun startCamera(){
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        val cameraExecutor = ContextCompat.getMainExecutor(this)
         cameraProviderFuture.addListener(
             {
                 // Used to bind the lifecycle of cameras to the lifecycle owner
@@ -51,16 +53,15 @@ class MainActivity : AppCompatActivity() {
                         it.setSurfaceProvider(binding.previewView.surfaceProvider)
                     }
 //                //Image analyzer
-//                val imageAnalyzer = ImageAnalysis.Builder()
-//                    .build()
-//                    .also {
-//                        it.setAnalyzer(cameraExecutor,{
-//
-//                        })
-////                        it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-////                            Log.d(TAG, "Average luminosity: $luma")
-////                        })
-//                    }
+                val imageAnalyzer = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also { it ->
+                        it.setAnalyzer(cameraExecutor,
+                            MyTextRecognition{visionText->
+                                   binding.textRes.text =visionText.text
+                            })
+                    }
 
 
                 // Select back camera as a default
@@ -72,13 +73,13 @@ class MainActivity : AppCompatActivity() {
 
                     // Bind use cases to camera
                     cameraProvider.bindToLifecycle(
-                        this, cameraSelector, preview)
+                        this, cameraSelector, preview, imageAnalyzer)
 
                 } catch(exc: Exception) {
                     Log.e(TAG, "Use case binding failed", exc)
                 }
             }
-        ,ContextCompat.getMainExecutor(this))
+        ,cameraExecutor)
     }
 
     companion object{

@@ -60,4 +60,5 @@ dependencies {
     implementation("androidx.camera:camera-view:${camerax_version}")
     // If you want to additionally add CameraX ML Kit Vision Integration
     implementation("androidx.camera:camera-mlkit-vision:${camerax_version}")
+    implementation("com.google.mlkit:text-recognition:16.0.0")
 }
